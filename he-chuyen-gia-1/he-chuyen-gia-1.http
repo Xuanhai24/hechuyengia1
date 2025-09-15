@@ -1,0 +1,6 @@
+@he_chuyen_gia_1_HostAddress = http://localhost:5223
+
+GET {{he_chuyen_gia_1_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
