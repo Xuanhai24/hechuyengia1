@@ -18,14 +18,35 @@ public class PrologService
     // GET danh sách triệu chứng
     public async Task<List<string>?> LayDanhSachTrieuChungAsync()
     {
-        return await _httpClient.GetFromJsonAsync<List<string>>("http://localhost:8084/danhsachtrieuchung");
+
+            HttpResponseMessage response = await _httpClient.GetAsync("http://localhost:8084/danhsachtrieuchung");
+            if (response.IsSuccessStatusCode)
+            {
+                return await response.Content.ReadFromJsonAsync<List<string>>();
+            }
+            else
+            {
+                var error = await response.Content.ReadAsStringAsync();
+                throw new Exception(
+                    $"Request failed with status {response.StatusCode}: {error}"
+                );
+            }
     }
 
     // POST chẩn đoán bệnh → trả List<DiagnosisResult>
     public async Task<List<Disease>?> ChuanDoanBenhAsync(List<string> trieuChung)
     {
         var response = await _httpClient.PostAsJsonAsync("http://localhost:8084/chuandoan", trieuChung);
-        response.EnsureSuccessStatusCode();
-        return await response.Content.ReadFromJsonAsync<List<Disease>>();
+        if (response.IsSuccessStatusCode)
+        {
+            return await response.Content.ReadFromJsonAsync<List<Disease>>();
+        }
+        else
+        {
+            var error = await response.Content.ReadAsStringAsync();
+            throw new HttpRequestException(
+                $"Diagnosis request failed with status {response.StatusCode}: {error}"
+            );
+        }
     }
 }
