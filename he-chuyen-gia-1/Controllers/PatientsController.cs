@@ -15,6 +15,25 @@ namespace hechuyengia.Controllers
         private readonly AppDbContext _db;
         public PatientsController(AppDbContext db) => _db = db;
 
+        [HttpGet("Search")]
+        public async Task<IActionResult> SearchById([FromQuery] string id)
+        {
+            if (string.IsNullOrWhiteSpace(id))
+                return BadRequest("Vui lòng nhập Mã bệnh nhân");
+
+            if (!int.TryParse(id, out int patientId))
+                return BadRequest("Mã bệnh nhân phải là số hợp lệ");
+
+            var patients = await _db.Patients
+                .Where(p => p.PatientId.ToString().Contains(id))
+                .AsNoTracking()
+                .ToListAsync();
+
+            if (patients == null || patients.Count == 0)
+                return NotFound();
+            return Ok(patients);
+        }
+
         // GET /api/Patients?search=&sort=name|dob|name_desc|dob_desc
         [HttpGet]
         public async Task<IActionResult> Get(string? search, string sort = "name")
