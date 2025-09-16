@@ -16,21 +16,15 @@ namespace hechuyengia.Controllers
         public PatientsController(AppDbContext db) => _db = db;
 
         [HttpGet("Search")]
-        public async Task<IActionResult> SearchById([FromQuery] string id)
+        public async Task<IActionResult> SearchById([FromQuery] String id)
         {
-            if (string.IsNullOrWhiteSpace(id))
-                return BadRequest("Vui lòng nhập Mã bệnh nhân");
-
-            if (!int.TryParse(id, out int patientId))
-                return BadRequest("Mã bệnh nhân phải là số hợp lệ");
-
+            if (!int.TryParse(id, out var searchId)) return BadRequest("Mã BN phải là số.");
+            
             var patients = await _db.Patients
-                .Where(p => p.PatientId.ToString().Contains(id))
+                .Where(p => p.PatientId.ToString().Contains(id.ToString()))
                 .AsNoTracking()
                 .ToListAsync();
 
-            if (patients == null || patients.Count == 0)
-                return NotFound();
             return Ok(patients);
         }
 
