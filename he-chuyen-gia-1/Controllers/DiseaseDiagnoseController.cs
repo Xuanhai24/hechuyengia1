@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Threading.Tasks;
 
 namespace hechuyengia.Controllers
@@ -29,11 +30,14 @@ namespace hechuyengia.Controllers
         [HttpGet("danh-sach-trieu-chung")]
         public async Task<ActionResult<List<string>>> GetSymptomList()
         {
-            lock (_lock)
+            try
             {
                 var res = _prolog.LayDanhSachTrieuChungAsync().Result; // hoặc await nếu muốn async thật
-                if (res == null) return NotFound();
                 return Ok(res);
+            }catch(Exception ex)
+            {
+                _logger.LogError(ex, "Lỗi kết nối đến Prolog server");
+                return StatusCode(503, "Không thể kết nối đến server");
             }
         }
 
@@ -43,19 +47,14 @@ namespace hechuyengia.Controllers
         {
             if (symptoms == null || symptoms.Length == 0)
             {
-                return BadRequest("Danh sách triệu chứng không được để trống.");
+                return BadRequest("Danh sách triệu chứng đã chọn đang để trống.");
             }
-
-            lock (_lock)
-            {
                 var result = _prolog.ChuanDoanBenhAsync(new List<string>(symptoms)).Result; // hoặc await
-                if (result == null) return NotFound();
                 return Ok(result);
-            }
         }
 
         [HttpPost("luu-ket-qua")]
-        public IActionResult SaveDiagnosedResult([FromBody] DiagnoseResult ds)
+        public async Task<IActionResult> SaveDiagnosedResult([FromBody] DiagnoseResult ds)
         {
             var doctorName = User.Identity?.Name ?? "Unknown"; // lấy từ JWT claims
             ds.DoctorName = doctorName;
@@ -66,19 +65,19 @@ namespace hechuyengia.Controllers
             return NoContent();
         }
 
-        [HttpGet("benh-nhan/{patientId}")]
-        public async Task<ActionResult<IEnumerable<DiagnoseResult>>> GetByPatient(int patientId)
-        {
-            var doctorName = User.Identity?.Name ?? "Unknown";
+        //[HttpGet("benh-nhan/{patientId}")]
+        //public async Task<ActionResult<IEnumerable<DiagnoseResult>>> GetByPatient(int patientId)
+        //{
+        //    var doctorName = User.Identity?.Name ?? "Unknown";
 
-            var results = await _db.DiagnoseResults
-                .Where(d => d.PatientId == patientId && d.DoctorName == doctorName)
-                .OrderByDescending(d => d.DiagnoseDate)
-                .ToListAsync();
+        //    var results = await _db.DiagnoseResults
+        //        .Where(d => d.PatientId == patientId && d.DoctorName == doctorName)
+        //        .OrderByDescending(d => d.DiagnoseDate)
+        //        .ToListAsync();
 
-            return Ok(results);
-        }
-
+        //    return Ok(results);
+        //}
+ // moi controller chi co mot trach nghiem cua minh
 
     }
 }
